@@ -1025,6 +1025,15 @@ body.victory-mode .wishes-band {
     display: grid;
   }
 
+  .wish-board {
+    order: -1;
+  }
+
+  .birthday-letter,
+  .wish-board {
+    padding: 1.15rem;
+  }
+
   .candle-row {
     grid-template-columns: repeat(5, minmax(0, 1fr));
   }

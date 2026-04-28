@@ -374,6 +374,10 @@ function queueNextServe() {
   resetBallForServe(nextServer);
 }
 
+function getRevealScrollTarget() {
+  return window.matchMedia("(max-width: 720px)").matches ? wishBoard : wishesBand;
+}
+
 function unlockBirthdayWall() {
   wishesBand.classList.remove("hidden");
   wishesBand.classList.remove("locked");
@@ -392,7 +396,7 @@ function unlockBirthdayWall() {
   });
 
   setTimeout(() => {
-    wishesBand.scrollIntoView({ behavior: "smooth", block: "start" });
+    getRevealScrollTarget().scrollIntoView({ behavior: "smooth", block: "start" });
   }, 320);
 }
 
@@ -405,6 +409,12 @@ function openVictoryDialog() {
 
 function closeVictoryDialog() {
   victoryPop.classList.remove("is-open");
+
+  if (state.winner === "emilee" && window.matchMedia("(max-width: 720px)").matches) {
+    requestAnimationFrame(() => {
+      wishBoard.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+  }
 }
 
 function spawnConfetti() {
