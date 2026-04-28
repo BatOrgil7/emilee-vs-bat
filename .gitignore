@@ -1,5 +1,8 @@
 node_modules/
 .vercel/
+.publish-tools/
 qa-*.png
 Thumbs.db
 .DS_Store
+
+.vercel
