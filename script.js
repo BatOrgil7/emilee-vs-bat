@@ -374,8 +374,12 @@ function queueNextServe() {
   resetBallForServe(nextServer);
 }
 
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 720px)").matches;
+}
+
 function getRevealScrollTarget() {
-  return window.matchMedia("(max-width: 720px)").matches ? wishBoard : wishesBand;
+  return isMobileLayout() ? wishBoard : wishesBand;
 }
 
 function unlockBirthdayWall() {
@@ -410,7 +414,7 @@ function openVictoryDialog() {
 function closeVictoryDialog() {
   victoryPop.classList.remove("is-open");
 
-  if (state.winner === "emilee" && window.matchMedia("(max-width: 720px)").matches) {
+  if (state.winner === "emilee" && isMobileLayout()) {
     requestAnimationFrame(() => {
       wishBoard.scrollIntoView({ behavior: "smooth", block: "start" });
     });
@@ -449,7 +453,9 @@ function winMatch() {
   setStatus(`Emilee wins the set ${formatSetScore()} and the whole adorable thing.`);
   addCommentary(`Set Emilee, ${formatSetScore()}. Bat swings, misses, and the confetti takes over.`);
   unlockBirthdayWall();
-  openVictoryDialog();
+  if (!isMobileLayout()) {
+    openVictoryDialog();
+  }
   spawnConfetti();
 }
 
