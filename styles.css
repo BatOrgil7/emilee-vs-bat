@@ -596,6 +596,15 @@ select {
   line-height: 0.85;
 }
 
+.score-detail {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.6rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--ink-soft);
+}
+
 .score-box-emilee {
   background: linear-gradient(180deg, rgba(255, 146, 171, 0.24), rgba(255, 219, 198, 0.55));
 }

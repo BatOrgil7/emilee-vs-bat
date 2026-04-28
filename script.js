@@ -4,6 +4,8 @@ const ctx = canvas.getContext("2d");
 const matchStatus = document.getElementById("match-status");
 const emileeScoreNode = document.getElementById("emilee-score");
 const batScoreNode = document.getElementById("bat-score");
+const emileePointTextNode = document.getElementById("emilee-point-text");
+const batPointTextNode = document.getElementById("bat-point-text");
 const commentaryList = document.getElementById("commentary-list");
 const wishesBand = document.getElementById("wishes");
 const wishSectionTag = document.getElementById("wish-section-tag");
@@ -19,7 +21,9 @@ const victoryTitle = document.getElementById("victory-title");
 const victoryMessage = document.getElementById("victory-message");
 const closeVictoryButton = document.getElementById("close-victory");
 const restartMatchButton = document.getElementById("restart-match");
-const matchGoal = 4;
+const gamesToWinSet = 6;
+const tiebreakTarget = 7;
+const tennisPointLabels = ["0", "15", "30", "40", "Ad"];
 
 const bounds = {
   groundY: 430,
@@ -59,6 +63,7 @@ const commentaryPresets = {
     "The umpire clears her throat. Turner Center belongs to Emilee tonight.",
     "Bat bounces the ball twice and already looks like he is second-guessing this matchup.",
     "The crowd settles in, the strings are fresh, and Turner Center is ready for chaos.",
+    "One set decides it all tonight, and Turner Center knows the stakes.",
   ],
   emilee: [
     "Emilee whips a glittery forehand past Bat. The crowd screams like it practiced.",
@@ -93,8 +98,10 @@ const commentaryPresets = {
 };
 
 const state = {
-  emileeScore: 0,
-  batScore: 0,
+  emileeGames: 0,
+  batGames: 0,
+  emileePoints: 0,
+  batPoints: 0,
   rallyActive: false,
   winner: null,
   commentary: [],
@@ -125,6 +132,8 @@ const state = {
     bouncesOnCurrentSide: 0,
   },
   server: "bat",
+  gameServer: "bat",
+  tiebreak: false,
   serveTimer: 44,
   pointPause: 0,
   lastFrame: 0,
@@ -182,9 +191,145 @@ function chooseLine(bucket) {
   return line;
 }
 
+function otherPlayer(player) {
+  return player === "emilee" ? "bat" : "emilee";
+}
+
+function playerName(player) {
+  return player === "emilee" ? "Emilee" : "Bat";
+}
+
+function getGames(player) {
+  return player === "emilee" ? state.emileeGames : state.batGames;
+}
+
+function setGames(player, value) {
+  if (player === "emilee") {
+    state.emileeGames = value;
+    return;
+  }
+  state.batGames = value;
+}
+
+function getPoints(player) {
+  return player === "emilee" ? state.emileePoints : state.batPoints;
+}
+
+function setPoints(player, value) {
+  if (player === "emilee") {
+    state.emileePoints = value;
+    return;
+  }
+  state.batPoints = value;
+}
+
+function formatSetScore() {
+  return `${state.emileeGames}-${state.batGames}`;
+}
+
+function formatPointDisplay(player) {
+  if (state.tiebreak) {
+    return String(getPoints(player));
+  }
+  return tennisPointLabels[Math.min(getPoints(player), tennisPointLabels.length - 1)];
+}
+
+function formatPointText(player) {
+  if (state.tiebreak) {
+    return `Tiebreak ${getPoints(player)}`;
+  }
+  return `Points ${formatPointDisplay(player)}`;
+}
+
+function formatPointCall() {
+  if (state.tiebreak) {
+    return `Tiebreak ${state.emileePoints}-${state.batPoints}.`;
+  }
+
+  if (state.emileePoints >= 3 && state.batPoints >= 3) {
+    if (state.emileePoints === state.batPoints) {
+      return "Deuce.";
+    }
+    return state.emileePoints > state.batPoints ? "Advantage Emilee." : "Advantage Bat.";
+  }
+
+  return `${formatPointDisplay("emilee")}-${formatPointDisplay("bat")}.`;
+}
+
+function formatSetLeaderStatus() {
+  if (state.emileeGames === state.batGames) {
+    return `The set is level at ${formatSetScore()}.`;
+  }
+
+  const leader = state.emileeGames > state.batGames ? "Emilee" : "Bat";
+  return `${leader} leads the set ${formatSetScore()}.`;
+}
+
+function getUpcomingServer() {
+  if (!state.tiebreak) {
+    return state.gameServer;
+  }
+
+  const totalTiebreakPoints = state.emileePoints + state.batPoints;
+  if (totalTiebreakPoints === 0) {
+    return state.gameServer;
+  }
+
+  const alternateServer = otherPlayer(state.gameServer);
+  const serviceBlock = Math.floor((totalTiebreakPoints - 1) / 2);
+  return serviceBlock % 2 === 0 ? alternateServer : state.gameServer;
+}
+
+function shouldStartTiebreak() {
+  return state.emileeGames === gamesToWinSet && state.batGames === gamesToWinSet;
+}
+
+function hasWonSet(player) {
+  const playerGames = getGames(player);
+  const opponentGames = getGames(otherPlayer(player));
+
+  if (playerGames < gamesToWinSet) {
+    return false;
+  }
+
+  if (playerGames === 7) {
+    return true;
+  }
+
+  return playerGames - opponentGames >= 2;
+}
+
+function hasWonTiebreak(player) {
+  const playerPoints = getPoints(player);
+  const opponentPoints = getPoints(otherPlayer(player));
+  return playerPoints >= tiebreakTarget && playerPoints - opponentPoints >= 2;
+}
+
+function describeRallyResult(scorer, reason) {
+  if (scorer === "emilee") {
+    if (reason === "net") {
+      return "Bat clips the net.";
+    }
+    if (reason === "second-bounce") {
+      return "Bat cannot chase down the second bounce.";
+    }
+    return "Emilee takes the point.";
+  }
+
+  if (reason === "net") {
+    return "Emilee clips the net.";
+  }
+  if (reason === "second-bounce") {
+    return "Bat squeezes out the rally after Emilee cannot reach the second bounce.";
+  }
+  return "Bat takes the point.";
+}
+
 function syncScoreUI() {
-  emileeScoreNode.textContent = String(state.emileeScore);
-  batScoreNode.textContent = String(state.batScore);
+  emileeScoreNode.textContent = String(state.emileeGames);
+  batScoreNode.textContent = String(state.batGames);
+  emileePointTextNode.textContent = formatPointText("emilee");
+  batPointTextNode.textContent = formatPointText("bat");
 }
 
 function resetBallForServe(server) {
@@ -216,11 +361,15 @@ function startRally() {
     state.ball.vx = 6.3;
     state.ball.vy = -8.35;
   }
-  setStatus(state.server === "bat" ? "Bat serves. Emilee is ready." : "Emilee serves with sparkle.");
+  setStatus(
+    state.tiebreak
+      ? `${playerName(state.server)} serves in the tiebreak. ${formatSetLeaderStatus()}`
+      : `${playerName(state.server)} serves. ${formatSetLeaderStatus()}`
+  );
 }
 
 function queueNextServe() {
-  const nextServer = state.emileeScore <= state.batScore ? "bat" : "emilee";
+  const nextServer = getUpcomingServer();
   addCommentary(chooseLine("serves"));
   resetBallForServe(nextServer);
 }
@@ -287,8 +436,8 @@ function winMatch() {
 
   state.winner = "emilee";
   state.rallyActive = false;
-  setStatus("Emilee wins the whole adorable thing.");
-  addCommentary("Match point for Emilee. Bat swings, misses, and the confetti takes over.");
+  setStatus(`Emilee wins the set ${formatSetScore()} and the whole adorable thing.`);
+  addCommentary(`Set Emilee, ${formatSetScore()}. Bat swings, misses, and the confetti takes over.`);
   unlockBirthdayWall();
   openVictoryDialog();
   spawnConfetti();
@@ -301,47 +450,96 @@ function loseMatch() {
 
   state.winner = "bat";
   state.rallyActive = false;
-  setStatus("Bat steals this round. Hit restart and let Emilee get her revenge.");
-  addCommentary("Bat sneaks the set, but the crowd instantly demands an immediate rematch.");
+  setStatus(`Bat steals the set ${formatSetScore()}. Hit restart and let Emilee get her revenge.`);
+  addCommentary(`Set Bat, ${formatSetScore()}. The crowd instantly demands an immediate rematch.`);
+}
+
+function awardGame(winner) {
+  const nextServer = otherPlayer(state.gameServer);
+
+  setGames(winner, getGames(winner) + 1);
+  state.emileePoints = 0;
+  state.batPoints = 0;
+  state.tiebreak = false;
+  state.gameServer = nextServer;
+
+  if (hasWonSet(winner)) {
+    return { type: "set" };
+  }
+
+  if (shouldStartTiebreak()) {
+    state.tiebreak = true;
+    return {
+      type: "game",
+      status: `Game ${playerName(winner)}. Six-all, so Turner Center is headed to a tiebreak.`,
+    };
+  }
+
+  return {
+    type: "game",
+    status: `Game ${playerName(winner)}. ${formatSetLeaderStatus()}`,
+  };
+}
+
+function awardStandardPoint(scorer) {
+  const opponent = otherPlayer(scorer);
+  const scorerPoints = getPoints(scorer);
+  const opponentPoints = getPoints(opponent);
+
+  if (scorerPoints < 3) {
+    setPoints(scorer, scorerPoints + 1);
+    return { type: "point" };
+  }
+
+  if (scorerPoints === 3) {
+    if (opponentPoints < 3) {
+      return awardGame(scorer);
+    }
+    if (opponentPoints === 3) {
+      setPoints(scorer, 4);
+      return { type: "point" };
+    }
+    if (opponentPoints === 4) {
+      setPoints(opponent, 3);
+      return { type: "point" };
+    }
+  }
+
+  return awardGame(scorer);
+}
+
+function awardTiebreakPoint(scorer) {
+  setPoints(scorer, getPoints(scorer) + 1);
+  if (hasWonTiebreak(scorer)) {
+    return awardGame(scorer);
+  }
+  return { type: "point" };
 }
 
 function scorePoint(scorer, reason) {
   state.rallyActive = false;
   state.pointPause = 38;
 
-  if (scorer === "emilee") {
-    state.emileeScore += 1;
-    addCommentary(chooseLine("emilee"));
-    setStatus(
-      reason === "net"
-        ? "Bat clips the net. Emilee takes the point."
-        : reason === "second-bounce"
-          ? "Bat cannot chase down the second bounce. Point Emilee."
-          : "Point Emilee. The pressure keeps building."
-    );
-  } else {
-    state.batScore += 1;
-    addCommentary(chooseLine("bat"));
-    setStatus(
-      reason === "net"
-        ? "Emilee clips the net and Bat grabs the point."
-        : reason === "second-bounce"
-          ? "Bat squeezes out the rally after Emilee cannot reach the second bounce."
-          : "A scrappy point for Bat. Emilee lines up the next one."
-    );
-  }
+  addCommentary(chooseLine(scorer === "emilee" ? "emilee" : "bat"));
 
+  const outcome = state.tiebreak ? awardTiebreakPoint(scorer) : awardStandardPoint(scorer);
   syncScoreUI();
 
-  if (state.emileeScore >= matchGoal) {
-    winMatch();
+  if (outcome.type === "set") {
+    if (scorer === "emilee") {
+      winMatch();
+    } else {
+      loseMatch();
+    }
     return;
   }
 
-  if (state.batScore >= matchGoal) {
-    loseMatch();
+  if (outcome.type === "game") {
+    setStatus(outcome.status);
     return;
   }
+
+  setStatus(`${describeRallyResult(scorer, reason)} ${formatPointCall()}`);
 }
 
 function handleGroundBounce() {
@@ -411,10 +609,12 @@ function maybeBatReturn() {
   }
 
   const missChance = Math.min(
-    0.58,
-    0.14 +
-      state.emileeScore * 0.05 +
-      (state.emileeScore > state.batScore ? 0.08 : 0) +
+    0.6,
+    0.15 +
+      state.emileeGames * 0.03 +
+      (state.emileeGames > state.batGames ? 0.06 : 0) +
+      (state.emileePoints > state.batPoints ? 0.04 : 0) +
+      (state.tiebreak ? 0.03 : 0) +
       (state.ball.bouncesOnCurrentSide === 1 ? 0.08 : 0)
   );
   const shouldMiss = Math.random() < missChance;
@@ -452,7 +652,11 @@ function updateGame(dt) {
       : state.ball.x > bounds.netX
         ? state.ball.x - 8
         : state.bat.homeX;
-  const batSpeed = Math.max(2.2, 4.35 - state.emileeScore * 0.25) * dt;
+  const batSpeed =
+    Math.max(
+      2.2,
+      4.35 - state.emileeGames * 0.12 - (state.emileePoints > state.batPoints ? 0.08 : 0)
+    ) * dt;
   state.bat.x = moveTowards(
     state.bat.x,
     Math.min(bounds.batMaxX, Math.max(bounds.batMinX, batTarget)),
@@ -744,13 +948,15 @@ function drawNetStructure() {
 }
 
 function drawBadge() {
-  drawRoundedRect(28, 22, 210, 86, 22, "rgba(255, 253, 248, 0.8)");
+  drawRoundedRect(28, 22, 220, 100, 22, "rgba(255, 253, 248, 0.8)");
   ctx.fillStyle = "rgba(90, 50, 89, 0.68)";
   ctx.font = '700 20px "Baloo 2"';
-  ctx.fillText("Turner Center", 48, 56);
+  ctx.fillText("Turner Center", 48, 52);
   ctx.fillStyle = "#5a3259";
-  ctx.font = '800 28px "Baloo 2"';
-  ctx.fillText(`Emilee ${state.emileeScore}  •  Bat ${state.batScore}`, 48, 86);
+  ctx.font = '700 18px "Baloo 2"';
+  ctx.fillText(`Set ${state.emileeGames}-${state.batGames}`, 48, 78);
+  ctx.font = '800 20px "Baloo 2"';
+  ctx.fillText(`Pts ${formatPointDisplay("emilee")}  •  ${formatPointDisplay("bat")}`, 48, 104);
 }
 
 function drawCharacter(x, color, label, swinging, leftSide, missed = false) {
@@ -951,8 +1157,10 @@ function wireScrollButtons() {
 }
 
 function resetMatch() {
-  state.emileeScore = 0;
-  state.batScore = 0;
+  state.emileeGames = 0;
+  state.batGames = 0;
+  state.emileePoints = 0;
+  state.batPoints = 0;
   state.winner = null;
   state.commentary = [];
   state.emilee.x = state.emilee.homeX;
@@ -963,6 +1171,8 @@ function resetMatch() {
   state.pointPause = 0;
   state.confettiFired = false;
   state.recentCommentaryByBucket = {};
+  state.gameServer = "bat";
+  state.tiebreak = false;
 
   wishesBand.classList.add("locked");
   wishesBand.classList.add("hidden");
@@ -979,8 +1189,8 @@ function resetMatch() {
   syncScoreUI();
   commentaryList.innerHTML = "";
   commentaryPresets.opening.forEach((line) => addCommentary(line));
-  setStatus("Warm-up tosses and Turner Center nerves.");
-  resetBallForServe("bat");
+  setStatus("Opening game at Turner Center. Bat to serve.");
+  resetBallForServe(state.gameServer);
 }
 
 function setup() {
