@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Emilee vs Bat</title>
+    <meta
+      name="description"
+      content="A cute little tennis game where Emilee takes on Bat and wins center court."
+    />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;700;800&family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Nunito:wght@500;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="backdrop" aria-hidden="true"></div>
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="hero-tag">Center Court Showdown</p>
+        <h1>Emilee vs Bat</h1>
+        <p class="hero-lede">
+          A pastel little tennis world where Emilee sends sparkling winners
+          across the court and Bat gets thoroughly outplayed.
+        </p>
+        <div class="hero-actions">
+          <button class="button button-primary" data-scroll-to="game">
+            Start the match
+          </button>
+        </div>
+        <div class="hero-stat-row" aria-label="Match highlights">
+          <div class="hero-stat">
+            <span class="hero-stat-label">Surface</span>
+            <strong>Sherbet court</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Opponent</span>
+            <strong>Bat</strong>
+          </div>
+          <div class="hero-stat">
+            <span class="hero-stat-label">Stakes</span>
+            <strong>Bragging rights</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="hero-art" aria-hidden="true">
+        <div class="hero-scoreboard">
+          <span>Center Court Match</span>
+          <strong>Emilee wins</strong>
+        </div>
+        <div class="hero-court">
+          <div class="hero-net"></div>
+          <div class="hero-player hero-player-emilee">
+            <span class="hero-label">Emilee</span>
+          </div>
+          <div class="hero-player hero-player-bat">
+            <span class="hero-label">Bat</span>
+          </div>
+          <div class="hero-ball"></div>
+        </div>
+        <div class="sticker sticker-heart"></div>
+        <div class="sticker sticker-ball"></div>
+        <div class="sticker sticker-bow"></div>
+      </div>
+    </header>
+
+    <main>
+      <section class="game-band" id="game" aria-labelledby="game-title">
+        <div class="section-head">
+          <p class="section-tag">Playable Bit</p>
+          <h2 id="game-title">Help Emilee close out the cutest match on tour</h2>
+        </div>
+
+        <div class="game-shell">
+          <div class="game-surface">
+            <div class="surface-topline">
+              <span id="match-status">Warm-up tosses and center court nerves.</span>
+              <button class="button button-tertiary" id="restart-match">
+                Restart match
+              </button>
+            </div>
+            <canvas
+              id="tennis-court"
+              width="960"
+              height="560"
+              aria-label="A playful tennis game where Emilee plays against Bat"
+            ></canvas>
+            <div class="touch-controls" aria-label="Touch controls for the tennis game">
+              <button class="touch-button" data-hold="left">Left</button>
+              <button class="touch-button" data-hold="right">Right</button>
+              <button class="touch-button touch-button-swing" data-tap="swing">
+                Swing
+              </button>
+            </div>
+          </div>
+
+          <aside class="game-panel">
+            <div class="score-strip" aria-label="Live score">
+              <div class="score-box score-box-emilee">
+                <span>Emilee</span>
+                <strong id="emilee-score">0</strong>
+              </div>
+              <div class="score-box score-box-bat">
+                <span>Bat</span>
+                <strong id="bat-score">0</strong>
+              </div>
+            </div>
+
+            <div class="panel-block">
+              <h3>Center court commentary</h3>
+              <ul class="commentary-list" id="commentary-list" aria-live="polite"></ul>
+            </div>
+          </aside>
+        </div>
+      </section>
+
+      <section class="wishes-band locked hidden" id="wishes" aria-labelledby="wish-title">
+        <div class="section-head">
+          <p class="section-tag" id="wish-section-tag">Locked Finale</p>
+          <h2 id="wish-title">A note waits behind the trophy ribbon</h2>
+        </div>
+
+        <div class="lock-banner" id="lock-banner">
+          Beat Bat to unlock the final message for Emilee.
+        </div>
+
+        <div class="wish-layout">
+          <div class="birthday-letter">
+            <p class="letter-kicker">Unlocked after match point</p>
+            <h3 id="wish-heading">A note is waiting</h3>
+            <p id="wish-message">
+              The full reveal stays locked until Emilee beats Bat on center
+              court.
+            </p>
+            <button class="button button-primary hidden" id="play-again">
+              Play the match again
+            </button>
+          </div>
+
+          <div class="wish-board" id="wish-board">
+            <ol id="wish-grid" class="wish-grid"></ol>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <div class="victory-pop" id="victory-pop" role="dialog" aria-modal="true" aria-labelledby="victory-title">
+      <div class="victory-card">
+        <p class="section-tag">Match Point</p>
+        <h2 id="victory-title">Emilee beats Bat. Happy 20th Birthday!</h2>
+        <p id="victory-message">
+          The final forehand lands, the crowd loses its mind, and the whole
+          court finally gets to say it: happy birthday, Emilee.
+        </p>
+        <div class="victory-actions">
+          <button class="button button-primary" id="close-victory">
+            Keep smiling
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <script src="./script.js"></script>
+  </body>
+</html>
