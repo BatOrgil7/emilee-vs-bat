@@ -37,7 +37,7 @@ const birthdayWishes = [
   "I hope good people keep showing up for you in obvious ways.",
   "I hope you get more slow, lovely days than rushed ones.",
   "I hope your favorite songs keep finding you at the perfect time.",
-  "I hope you feel proud of yourself a lot this year.",
+  "I hope you get all A's on your finals.",
   "I hope fun finds you even on completely ordinary days.",
   "I hope your plans work out, and your detours turn out even better.",
   "I hope you keep collecting little memories you never want to forget.",
@@ -56,20 +56,27 @@ const birthdayWishes = [
 
 const commentaryPresets = {
   opening: [
-    "The umpire clears her throat. The strawberries are polished. Center court belongs to Emilee.",
-    "Bat bounces the ball twice and immediately looks like he regrets this matchup.",
+    "The umpire clears her throat. Turner Center belongs to Emilee tonight.",
+    "Bat bounces the ball twice and already looks like he is second-guessing this matchup.",
+    "The crowd settles in, the strings are fresh, and Turner Center is ready for chaos.",
   ],
   emilee: [
     "Emilee whips a glittery forehand past Bat. The crowd screams like it practiced.",
-    "Bat lunges. Emilee paints the sideline anyway. Center court tennis is ruthless.",
+    "Bat lunges. Emilee paints the sideline anyway. Turner Center tennis is ruthless.",
     "A moonbeam lob from Emilee drops right behind Bat. Pure mischief.",
     "Emilee sends a candy-colored winner cross-court. Bat is left arguing with the breeze.",
     "That return was so neat the scoreboard practically curtseyed for Emilee.",
+    "Emilee drills one deep and Bat is suddenly just jogging after bad news.",
+    "A clean backhand from Emilee skims the line and leaves Bat staring at it.",
+    "Emilee takes the ball early and turns the whole rally into her highlight reel.",
+    "Bat guesses wrong and Emilee zips the ball into the open court without mercy.",
   ],
   bat: [
     "Bat sneaks a lucky point while the crowd groans in disbelief.",
     "A wobble from Emilee hands Bat a point, and he celebrates way too early.",
     "Bat catches one on the frame and somehow gets away with it. Suspicious, honestly.",
+    "Bat steals that rally by inches and starts acting like he planned it.",
+    "One awkward bounce catches Emilee out and Bat grabs the point with a grin.",
   ],
   replays: [
     "Bat tries to claim another point, but the chair ump calls for a replay.",
@@ -79,6 +86,9 @@ const commentaryPresets = {
     "Bat serves first, looking brave in a way that feels temporary.",
     "Emilee bounces on her toes. Match energy is warming up.",
     "Another rally loads with suspiciously strong main-character energy in the air.",
+    "The next point starts with Turner Center buzzing a little louder.",
+    "Fresh rally. Fresh nerves for Bat.",
+    "Emilee resets, exhales, and gets ready to send another one back.",
   ],
 };
 
@@ -119,6 +129,7 @@ const state = {
   pointPause: 0,
   lastFrame: 0,
   confettiFired: false,
+  recentCommentaryByBucket: {},
 };
 
 function populateWishes() {
@@ -158,7 +169,17 @@ function addCommentary(text) {
 
 function chooseLine(bucket) {
   const lines = commentaryPresets[bucket];
-  return lines[Math.floor(Math.random() * lines.length)];
+  const recent = state.recentCommentaryByBucket[bucket] || [];
+  const available = lines.filter((line) => !recent.includes(line));
+  const pool = available.length > 0 ? available : lines;
+  const line = pool[Math.floor(Math.random() * pool.length)];
+
+  state.recentCommentaryByBucket[bucket] = [
+    line,
+    ...recent,
+  ].slice(0, Math.min(3, Math.max(1, lines.length - 1)));
+
+  return line;
 }
 
 function syncScoreUI() {
@@ -726,7 +747,7 @@ function drawBadge() {
   drawRoundedRect(28, 22, 210, 86, 22, "rgba(255, 253, 248, 0.8)");
   ctx.fillStyle = "rgba(90, 50, 89, 0.68)";
   ctx.font = '700 20px "Baloo 2"';
-  ctx.fillText("Center Court", 48, 56);
+  ctx.fillText("Turner Center", 48, 56);
   ctx.fillStyle = "#5a3259";
   ctx.font = '800 28px "Baloo 2"';
   ctx.fillText(`Emilee ${state.emileeScore}  •  Bat ${state.batScore}`, 48, 86);
@@ -941,6 +962,7 @@ function resetMatch() {
   state.bat.trailTimer = 0;
   state.pointPause = 0;
   state.confettiFired = false;
+  state.recentCommentaryByBucket = {};
 
   wishesBand.classList.add("locked");
   wishesBand.classList.add("hidden");
@@ -950,14 +972,14 @@ function resetMatch() {
   wishTitle.textContent = "A note waits behind the trophy ribbon";
   lockBanner.textContent = "Beat Bat to unlock the final message for Emilee.";
   wishHeading.textContent = "A note is waiting";
-  wishMessage.textContent = "The full reveal stays locked until Emilee beats Bat on center court.";
+  wishMessage.textContent = "The full reveal stays locked until Emilee beats Bat at Turner Center.";
   playAgainButton.classList.add("hidden");
   closeVictoryDialog();
 
   syncScoreUI();
   commentaryList.innerHTML = "";
   commentaryPresets.opening.forEach((line) => addCommentary(line));
-  setStatus("Warm-up tosses and center court nerves.");
+  setStatus("Warm-up tosses and Turner Center nerves.");
   resetBallForServe("bat");
 }
 
