@@ -386,6 +386,12 @@ function getRevealScrollTarget() {
   return isMobileLayout() ? wishBoard : wishesBand;
 }
 
+function scrollPageToRevealTarget(behavior = "smooth") {
+  const target = getRevealScrollTarget();
+  const top = Math.max(0, target.getBoundingClientRect().top + window.scrollY - 12);
+  window.scrollTo({ top, behavior });
+}
+
 function unlockBirthdayWall() {
   wishesBand.classList.remove("hidden");
   wishesBand.classList.remove("locked");
@@ -399,14 +405,18 @@ function unlockBirthdayWall() {
     "Happy 20th Birthday, Emilee. I hope this year feels light, exciting, and full of people who love you well. You deserve the kind of days that make you laugh hard, feel proud of yourself, and remember how deeply loved you are.";
   playAgainButton.classList.remove("hidden");
 
-  const revealTarget = getRevealScrollTarget();
   const scrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
 
   if (isMobileLayout()) {
-    revealTarget.scrollIntoView({ behavior: scrollBehavior, block: "start" });
-    setTimeout(() => {
+    requestAnimationFrame(() => {
       wishesBand.classList.add("is-revealed");
-    }, prefersReducedMotion() ? 0 : 220);
+      requestAnimationFrame(() => {
+        scrollPageToRevealTarget(prefersReducedMotion() ? "auto" : "auto");
+        setTimeout(() => {
+          scrollPageToRevealTarget(prefersReducedMotion() ? "auto" : "auto");
+        }, prefersReducedMotion() ? 0 : 220);
+      });
+    });
     return;
   }
 
@@ -415,7 +425,7 @@ function unlockBirthdayWall() {
   });
 
   setTimeout(() => {
-    revealTarget.scrollIntoView({ behavior: scrollBehavior, block: "start" });
+    scrollPageToRevealTarget(scrollBehavior);
   }, 320);
 }
 
@@ -431,7 +441,7 @@ function closeVictoryDialog() {
 
   if (state.winner === "emilee" && isMobileLayout()) {
     requestAnimationFrame(() => {
-      wishBoard.scrollIntoView({ behavior: "smooth", block: "start" });
+      scrollPageToRevealTarget("auto");
     });
   }
 }
