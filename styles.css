@@ -1051,4 +1051,18 @@ body.victory-mode .wishes-band {
     animation: none !important;
     transition: none !important;
   }
+
+  .wishes-band.is-revealed .birthday-letter,
+  .wishes-band.is-revealed .wish-board,
+  .wishes-band.is-revealed #wish-title,
+  .wishes-band.is-revealed #wish-heading,
+  .wishes-band.is-revealed .wish-item,
+  .wishes-band.is-revealed .birthday-letter::before,
+  .wishes-band.is-revealed .birthday-letter::after,
+  .victory-pop.is-open .victory-card,
+  .victory-pop.is-open .victory-card p,
+  .victory-pop.is-open .victory-card .victory-actions {
+    opacity: 1 !important;
+    transform: none !important;
+  }
 }

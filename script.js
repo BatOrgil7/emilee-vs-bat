@@ -378,6 +378,10 @@ function isMobileLayout() {
   return window.matchMedia("(max-width: 720px)").matches;
 }
 
+function prefersReducedMotion() {
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
 function getRevealScrollTarget() {
   return isMobileLayout() ? wishBoard : wishesBand;
 }
@@ -395,12 +399,23 @@ function unlockBirthdayWall() {
     "Happy 20th Birthday, Emilee. I hope this year feels light, exciting, and full of people who love you well. You deserve the kind of days that make you laugh hard, feel proud of yourself, and remember how deeply loved you are.";
   playAgainButton.classList.remove("hidden");
 
+  const revealTarget = getRevealScrollTarget();
+  const scrollBehavior = prefersReducedMotion() ? "auto" : "smooth";
+
+  if (isMobileLayout()) {
+    revealTarget.scrollIntoView({ behavior: scrollBehavior, block: "start" });
+    setTimeout(() => {
+      wishesBand.classList.add("is-revealed");
+    }, prefersReducedMotion() ? 0 : 220);
+    return;
+  }
+
   requestAnimationFrame(() => {
     wishesBand.classList.add("is-revealed");
   });
 
   setTimeout(() => {
-    getRevealScrollTarget().scrollIntoView({ behavior: "smooth", block: "start" });
+    revealTarget.scrollIntoView({ behavior: scrollBehavior, block: "start" });
   }, 320);
 }
 
