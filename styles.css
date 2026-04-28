@@ -62,11 +62,12 @@ select {
 }
 
 .hero {
-  display: grid;
-  grid-template-columns: minmax(0, 1.1fr) minmax(320px, 0.9fr);
-  gap: 2.5rem;
-  align-items: center;
-  padding: 4.5rem 0 3.5rem;
+  display: block;
+  padding: 4rem 0 2.75rem;
+}
+
+.hero-copy {
+  max-width: 46rem;
 }
 
 .hero-copy h1,
